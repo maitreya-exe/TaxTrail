@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaxTrail — Informal Economy Tax-Simplicity Advisor</title>
+</head>
+<body>
+<main id="taxtrail-app" class="app-shell">
+  <header class="topbar">
+    <div class="brand"><span class="brand-dot"></span><span>TaxTrail</span></div>
+    <div class="demo-mark">PS-12 · Informal Economy Tax-Simplicity Advisor</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">TELL US ABOUT YOUR WORK</p>
+      <h1>Describe your business.<br>We'll translate the rules.</h1>
+      <p class="intro">Explain your work in normal language. TaxTrail turns it into a checklist of likely registrations, an illustrative tax estimate where a simplified method can be used, and schemes worth checking. Nothing is filed or reported anywhere.</p>
+    </div>
+    <aside class="language-box"><span>Language</span><div class="language-switch"><button type="button" data-lang="en" class="is-active">English</button><button type="button" data-lang="hi">हिंदी</button></div></aside>
+  </section>
+
+  <section class="workbench">
+    <section class="panel entry-panel">
+      <div class="section-title"><p class="eyebrow">STEP 1</p><h2>In plain language, what's your work?</h2></div>
+      <textarea id="biz-desc" class="field textarea" rows="4" placeholder="e.g. I run a small tailoring shop with 2 helpers, turnover about ₹18 lakh a year, half UPI half cash"></textarea>
+      <div class="chip-row" id="example-chips"></div>
+      <div class="entry-actions"><button class="primary-action" id="analyze-btn" type="button">Analyze my business</button><p class="form-message" id="analyze-status"></p></div>
+    </section>
+
+    <section class="panel facts-panel" id="facts-panel" hidden>
+      <div class="section-title"><p class="eyebrow">STEP 2 · CHECK WHAT WE UNDERSTOOD</p><h2>Confirm the facts before we calculate</h2></div>
+      <p class="confidence-note" id="confidence-note"></p>
+      <div class="facts-grid">
+        <label>Main activity
+          <select id="f-sector" class="field"><option value="goods">I mainly sell products</option><option value="services">I mainly provide services</option><option value="mixed">I do both</option></select>
+        </label>
+        <label>What kind of work is this?
+          <select id="f-category" class="field"><option value="business">Shop / trading / small business</option><option value="professional">Professional work (e.g. doctor, lawyer, CA, architect)</option></select>
+        </label>
+        <label>About how much does the business sell in a year? (₹)
+          <input id="f-turnover" class="field" type="number" min="0" step="1000">
+          <small>This is your <strong>annual business turnover</strong> — total sales/receipts, not your personal profit.</small>
+        </label>
+        <label>About how much have you invested in business equipment? (₹)
+          <input id="f-investment" class="field" type="number" min="0" step="10000" placeholder="Leave blank if you don't know">
+          <small>Think machines, tools and business equipment. We use this only to estimate your MSME size.</small>
+        </label>
+        <label>Do you have paid helpers or employees?
+          <input id="f-employees" class="field" type="number" min="0" step="1" placeholder="0 if none">
+          <small>We use this to flag possible local labour/shop rules.</small>
+        </label>
+        <label>How do customers usually pay you?
+          <select id="f-payment" class="field"><option value="unknown">Not sure</option><option value="mostly_cash">Mostly cash</option><option value="mixed">Mix of cash + UPI/online</option><option value="mostly_digital">Almost all UPI/online (95%+)</option></select>
+          <small>This can affect the simplified presumptive-tax illustration.</small>
+        </label>
+        <label id="digital-wrap" hidden>Roughly what share is digital?
+          <input id="f-digital" class="field" type="number" min="0" max="100" step="5" placeholder="e.g. 60">
+          <small>Only needed if you choose a mixed payment pattern.</small>
+        </label>
+        <label>Which state is your business in?
+          <select id="f-state" class="field"></select>
+        </label>
+        <label>Do you sell to customers in other states?
+          <select id="f-interstate" class="field"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select>
+          <small>If yes, GST rules can change, so we'll flag that in your result.</small>
+        </label>
+        <label>Do you sell through Amazon, Flipkart, Meesho, Swiggy, etc.?
+          <select id="f-ecommerce" class="field"><option value="unknown">Not sure</option><option value="yes">Yes</option><option value="no">No</option></select>
+          <small>If yes, some GST rules need an extra check.</small>
+        </label>
+      </div>
+      <button class="primary-action" id="calculate-btn" type="button">Show my results</button>
+    </section>
+
+    <section class="results-wrap" id="results-wrap" hidden>
+      <div class="section-title"><p class="eyebrow">STEP 3 · YOUR PLAIN-LANGUAGE RESULT</p><h2>What this means for you</h2></div>
+      <div class="summary-strip" id="summary-strip"></div>
+      <div class="result-grid">
+        <article class="result-card"><h3>Registrations & checks</h3><ul class="reg-list" id="reg-list"></ul></article>
+        <article class="result-card"><h3>Illustrative tax picture</h3><div id="owe-body"></div></article>
+        <article class="result-card result-card--wide"><h3>Potential schemes & benefits to explore</h3><ul class="benefit-list" id="benefit-list"></ul></article>
+        <article class="result-card result-card--wide"><h3>Why did I get this result?</h3><div id="why-body"></div></article>
+        <article class="result-card result-card--wide next-card"><h3>Recommended next steps</h3><ol id="next-steps"></ol></article>
+      </div>
+      <details class="assumptions"><summary>Assumptions & sources used in this prototype</summary><div id="assumptions-body"></div></details>
+      <p class="disclaimer">Prototype guidance only. Tax, GST, MSME and scheme eligibility depends on facts and current notifications that this offline demo cannot fully verify. It does not file anything. Confirm before acting using the relevant official portal or a qualified professional.</p>
+    </section>
+  </section>
+
+  <footer><span>TaxTrail keeps the demo local to your browser. No form is submitted to an authority.</span><button id="reset-demo" type="button">Start over</button></footer>
+</main>
+
+<style>
+#taxtrail-app{--ink:#151629;--muted:#696b7a;--lav:#eeecff;--paper:#fbfbfd;--line:#dedee8;--purple:#5b4bdb;--green:#176646;--greenbg:#eaf8f1;--amber:#8a5a12;--amberbg:#fdf1de;--red:#a14444;--redbg:#fff0ed;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);max-width:1180px;margin:0 auto;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(27,24,80,.1)}
+#taxtrail-app *{box-sizing:border-box}#taxtrail-app .topbar{min-height:62px;display:flex;align-items:center;justify-content:space-between;padding:14px 36px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px}.brand{display:flex;gap:9px;align-items:center;font-weight:800;letter-spacing:-.04em;font-size:20px}.brand-dot{width:11px;height:11px;border-radius:50%;background:var(--purple);box-shadow:8px 0 0 #ffb86c}.demo-mark{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 10px}.hero{padding:56px 56px 44px;display:flex;justify-content:space-between;gap:40px;background:linear-gradient(135deg,#fff 0%,#f7f6ff 100%);border-bottom:1px solid var(--line)}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.13em;color:var(--purple);margin:0 0 12px}.hero h1{letter-spacing:-.05em;line-height:1.02;font-size:clamp(34px,4.6vw,54px);margin:0;max-width:700px}.intro{color:var(--muted);font-size:16px;line-height:1.6;max-width:650px;margin:20px 0 0}.language-box{min-width:190px;align-self:flex-start;background:var(--lav);padding:17px;border-radius:14px;font-size:13px;font-weight:700}.language-switch{display:flex;gap:6px;margin-top:11px}.language-switch button{cursor:pointer;border:0;background:transparent;padding:8px 9px;border-radius:8px;color:var(--muted);font:inherit}.language-switch .is-active{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(30,25,100,.1)}.workbench{padding:28px 32px 40px;display:grid;gap:20px}.panel,.result-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:25px}.section-title h2{font-size:24px;letter-spacing:-.04em;margin:0}.section-title .eyebrow{margin-bottom:7px}.textarea{width:100%;resize:vertical;border:1px solid var(--line);background:#fcfcff;border-radius:12px;padding:14px;font:inherit;color:var(--ink);margin-top:18px;line-height:1.5}.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.chip{cursor:pointer;border:1px solid var(--line);background:#fbfbff;border-radius:999px;padding:8px 13px;font-size:12px;color:var(--ink);text-align:left}.chip:hover{border-color:var(--purple)}.entry-actions{display:flex;align-items:center;gap:16px;margin-top:20px;flex-wrap:wrap}.primary-action{cursor:pointer;border:0;border-radius:10px;padding:13px 20px;background:var(--purple);color:#fff;font:700 14px inherit}.primary-action:disabled{opacity:.6;cursor:progress}.form-message{color:var(--muted);font-size:12px;margin:0}.facts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}.facts-grid label{font-size:12px;font-weight:700;display:flex;flex-direction:column;gap:6px}.field{border:1px solid var(--line);background:#fcfcff;border-radius:9px;padding:11px 10px;font:inherit;color:var(--ink);width:100%}.facts-grid small{font-weight:400;color:var(--muted);line-height:1.4}.facts-grid label[hidden]{display:none}.unknown-value{color:var(--amber)}.confidence-note{font-size:12px;color:var(--muted);background:#f4f4f7;padding:10px 13px;border-radius:9px;margin:16px 0 0}.results-wrap .section-title{margin-bottom:18px}.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}.summary-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px}.summary-item span{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.summary-item strong{font-size:15px}.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.result-card--wide{grid-column:1/-1}.result-card h3{margin:0 0 14px;font-size:17px;letter-spacing:-.02em}.reg-list,.benefit-list{list-style:none;padding:0;margin:0}.reg-list li{padding:12px 0;border-top:1px solid #f0f0f4}.reg-list li:first-child{border-top:0}.reg-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.reg-list p,.benefit-list p{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}.badge{font-size:9px;font-weight:900;letter-spacing:.08em;padding:5px 7px;border-radius:999px;white-space:nowrap}.badge--required{background:var(--redbg);color:var(--red)}.badge--recommended{background:var(--amberbg);color:var(--amber)}.badge--optional{background:var(--greenbg);color:var(--green)}.benefit-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}.benefit-list li{border:1px solid var(--line);border-radius:11px;padding:13px}.benefit-list strong{display:block;font-size:13.5px;margin-bottom:5px}.owe-line{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid #f0f0f4;font-size:13.5px}.owe-line:first-child{border-top:0}.owe-line strong{font-size:16px}.owe-note{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 12px}.why-list{margin:0;padding-left:19px}.why-list li{margin:7px 0;font-size:12.5px;line-height:1.45}.next-card ol{margin:0;padding-left:22px}.next-card li{margin:9px 0;font-size:13px;line-height:1.45}.assumptions{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}.assumptions summary{cursor:pointer;font-weight:800;font-size:13px}.assumptions div{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:12px}.assumptions a{color:var(--purple)}.disclaimer{margin-top:16px;font-size:11.5px;color:var(--muted);line-height:1.5;background:#f7f7fb;padding:13px 15px;border-radius:11px}footer{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid var(--line);padding:17px 36px;color:var(--muted);font-size:11px;background:#fff}footer button{cursor:pointer;background:transparent;border:0;color:var(--purple);font-weight:800;font:inherit}
+@media(max-width:720px){#taxtrail-app{border-radius:0}.topbar{padding:12px 20px}.hero{padding:34px 22px!important;display:block!important}.language-box{margin-top:22px}.workbench{padding:18px!important}.facts-grid,.result-grid{grid-template-columns:1fr!important}.summary-strip{grid-template-columns:1fr 1fr}.benefit-list{grid-template-columns:1fr!important}footer{padding:16px 24px!important;align-items:start!important;flex-direction:column}.hero h1{font-size:36px}}
+
+/* Step transition animations */
+@keyframes ttStepIn{from{opacity:0;transform:translateY(28px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes ttCardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ttButtonPop{0%{transform:scale(1)}45%{transform:scale(1.035)}100%{transform:scale(1)}}
+.tt-step-enter{animation:ttStepIn .58s cubic-bezier(.22,.8,.28,1) both}
+.tt-card-enter{animation:ttCardIn .5s cubic-bezier(.22,.8,.28,1) both}
+.tt-action-pop{animation:ttButtonPop .42s ease-out}
+@media (prefers-reduced-motion:reduce){.tt-step-enter,.tt-card-enter,.tt-action-pop{animation:none!important}}
+
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('taxtrail-app');
+  let lang = 'en';
+  const STATES = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jammu and Kashmir','Jharkhand','Karnataka','Kerala','Ladakh','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal'];
+  const SPECIAL_GST_STATES = new Set(['Arunachal Pradesh','Assam','Manipur','Meghalaya','Mizoram','Nagaland','Sikkim','Tripura','Himachal Pradesh']);
+  const COPY = {
+    en:{empty:'Type a short description first.',parsed:'We extracted a starting set of facts locally. Confirm them before calculation.',good:'Good — the demo found a likely scenario.',uncertain:'Some facts are uncertain. Confirm them before relying on the result.'},
+    hi:{empty:'पहले अपने काम के बारे में एक छोटा विवरण लिखें।',parsed:'हमने आपके विवरण से कुछ शुरुआती तथ्य निकाले हैं। गणना से पहले उन्हें जांचें।',good:'ठीक है — डेमो ने एक संभावित स्थिति पहचानी है।',uncertain:'कुछ तथ्य निश्चित नहीं हैं। परिणाम पर भरोसा करने से पहले उन्हें जांचें।'}
+  };
+  const EXAMPLES = {
+    en:['I run a tailoring shop with 2 helpers, annual turnover about ₹18 lakh, half UPI half cash','I am a freelance graphic designer, around ₹60,000 a month, mostly bank transfer','I sell vegetables from a cart, about ₹9,000 a month, mostly cash','I repair phones from a small shop, about ₹30,000 a month, mostly UPI'],
+    hi:['मैं 2 मददगारों के साथ सिलाई की दुकान चलाता हूं, सालाना टर्नओवर ₹18 लाख, आधा UPI आधा नकद','मैं फ्रीलांस ग्राफिक डिजाइनर हूं, महीने में लगभग ₹60,000, ज्यादातर बैंक ट्रांसफर','मैं ठेले पर सब्जी बेचता हूं, महीने में लगभग ₹9,000, ज्यादातर नकद','मैं छोटी दुकान से मोबाइल रिपेयर करता हूं, महीने में लगभग ₹30,000, ज्यादातर UPI']
+  };
+  const I18N = {
+    en: {
+      demoMark:'PS-12 · Informal Economy Tax-Simplicity Advisor', language:'Language', heroEyebrow:'TELL US ABOUT YOUR WORK', heroTitle:'Describe your business.<br>We\'ll translate the rules.', heroIntro:'Explain your work in normal language. TaxTrail turns it into a checklist of likely registrations, an illustrative tax estimate where a simplified method can be used, and schemes worth checking. Nothing is filed or reported anywhere.',
+      step1:'STEP 1', step1Title:'In plain language, what\'s your work?', placeholder:'e.g. I run a small tailoring shop with 2 helpers, turnover about ₹18 lakh a year, half UPI half cash', analyze:'Analyze my business',
+      step2:'STEP 2 · CHECK WHAT WE UNDERSTOOD', step2Title:'Confirm the facts before we calculate', mainActivity:'Main activity', sell:'I mainly sell products', services:'I mainly provide services', mixedActivity:'I do both', category:'What kind of work is this?', business:'Shop / trading / small business', professional:'Professional work (e.g. doctor, lawyer, CA, architect)', turnover:'About how much does the business sell in a year? (₹)', turnoverHelp:'This is your annual business turnover — total sales/receipts, not your personal profit.', investment:'About how much have you invested in business equipment? (₹)', investmentPlaceholder:"Leave blank if you don\'t know", investmentHelp:'Think machines, tools and business equipment. We use this only to estimate your MSME size.', employees:'Do you have paid helpers or employees?', employeesPlaceholder:'0 if none', employeesHelp:'We use this to flag possible local labour/shop rules.', payment:'How do customers usually pay you?', paymentUnknown:'Not sure', mostlyCash:'Mostly cash', paymentMixed:'Mix of cash + UPI/online', mostlyDigital:'Almost all UPI/online (95%+)', paymentHelp:'This can affect the simplified presumptive-tax illustration.', digitalShare:'Roughly what share is digital?', digitalPlaceholder:'e.g. 60', digitalHelp:'Only needed if you choose a mixed payment pattern.', state:'Which state is your business in?', stateUnknown:'Not sure / prefer not to say', interstate:'Do you sell to customers in other states?', ecommerce:'Do you sell through Amazon, Flipkart, Meesho, Swiggy, etc.?', yes:'Yes', no:'No', notSure:'Not sure', interstateHelp:'If yes, GST rules can change, so we\'ll flag that in your result.', ecommerceHelp:'If yes, some GST rules need an extra check.', showResults:'Show my results',
+      step3:'STEP 3 · YOUR PLAIN-LANGUAGE RESULT', step3Title:'What this means for you', registrations:'Registrations & checks', taxPicture:'Illustrative tax picture', schemes:'Potential schemes & benefits to explore', why:'Why did I get this result?', next:'Recommended next steps', assumptions:'Assumptions & sources used in this prototype', disclaimer:'Prototype guidance only. Tax, GST, MSME and scheme eligibility depends on facts and current notifications that this offline demo cannot fully verify. It does not file anything. Confirm before acting using the relevant official portal or a qualified professional.', reset:'Start over',
+      turnoverMissing:'We couldn\'t work out your yearly business sales from what you wrote. Please enter an approximate amount below.', monthlyConverted:'We found a monthly amount and converted it to annual turnover ×12. Please confirm it.', stateMissing:'You didn\'t mention your state. Please choose it below.', digitalMention:'You mentioned digital payments, but we did not assume they are 95%+ digital. Choose the payment pattern below.', investmentMissing:'You didn\'t mention business equipment investment, so leave it blank or enter an estimate if you want an MSME size estimate.', good:'Good — the demo found a likely scenario.', uncertain:'Some facts are uncertain. Confirm them before relying on the result.',
+      notProvided:'Not provided', annualTurnover:'Annual turnover', gstScreen:'GST screen', taxStatus:'Tax picture', msmeSize:'MSME size', moreInfo:'More information needed', likelyRegistration:'Likely registration required', extraReview:'Extra GST review needed', belowThreshold:'Likely below the common threshold',
+      gstRegistration:'GST registration', checkRequired:'CHECK / REQUIRED', recommended:'RECOMMENDED', optional:'OPTIONAL / REVIEW', whyGst:'Why GST needs extra review', udyam:'Udyam / MSME', labour:'Local shop / labour checks', professionalChecks:'Professional-specific checks', composition:'Composition scheme',
+      taxIncome:'Illustrative business/professional income', taxCess:'Illustrative income tax + 4% cess', paymentUsed:'Payment pattern used', almostDigital:'Almost all digital (95%+)', cashDigital:'Cash + digital', paymentNotConfirmed:'Payment pattern was not confirmed, so no digital-payment assumption was applied.', digital95:'The demo used the 95%+ digital-payment assumption for its illustration.', digitalNot95:'The demo did not assume the 95%+ digital-payment rate.',
+      udyamBenefit:'Udyam registration', mudra:'MUDRA', cgtmse:'CGTMSE', pmegp:'PMEGP', localRules:'Local labour / shop rules',
+      whyTurnover:'You entered {v} as annual business turnover. TaxTrail keeps turnover separate from profit.', whyGstScreen:'GST screen: {v}. {d}', whyInterstate:'Inter-State sales/services were marked YES, so the GST screen adds an extra review instead of relying only on turnover.', whyEcom:'E-commerce selling was marked YES, so the GST screen adds an extra review.', whyPayment:'Payment pattern: {v}. This is only used for the simplified presumptive-tax illustration.', whyMsme:'MSME size: {v}. This uses both turnover and business-equipment investment.',
+      nextGst:'Check GST registration applicability on the official GST portal before relying on the result.', nextKeep:'Keep turnover records and check whether any special GST registration rule applies to your business.', nextInvestment:'Enter your approximate business-equipment investment if you want an MSME size estimate.', nextUdyam:'If useful, verify Udyam eligibility and register through the official government portal.', nextTaxConfirm:'Confirm that the presumptive-tax scheme actually applies to your business before using the illustration for filing.', nextFullTax:'Use a full tax computation or professional help if the simplified scenario does not fit.', nextSchemes:'Treat loan/subsidy cards as leads to investigate, not approvals or guaranteed benefits.',
+      footer:'TaxTrail keeps the demo local to your browser. No form is submitted to an authority.', empty:'Please describe your business first.', parsed:'We extracted a starting set of facts locally. Confirm them before calculation.',
+      sourceGst:'This offline prototype uses a common screening threshold and separately flags inter-State/e-commerce answers because GST registration can depend on compulsory-registration provisions. It is not an exhaustive GST legal engine.', sourceTax:'The illustration uses the simplified AY 2026–27 new-regime calculation built into the demo. It is not a tax-return calculator and does not account for every source of income or special-rate item.', sourceMsme:'Current Udyam classification uses both investment and turnover: Micro ≤₹2.5cr investment and ≤₹10cr turnover; Small ≤₹25cr and ≤₹100cr; Medium ≤₹125cr and ≤₹500cr.', sourceIntro:'Sources:', sourceEnd:'This demo should be re-verified against current notifications before real-world use.',
+      invalidTurnover:'Please enter your annual business turnover before calculating.', invalidDigital:'Please enter a digital-payment percentage between 0 and 100.', yourState:'your state', noHelpers:'No paid helpers were entered, so this demo is not adding a labour-rule flag.', paidHelpers:'You entered {n} paid helper{plural}. Check the shop/establishment and labour rules that apply in {state}.',
+      gstAbove:'Your turnover is above the common threshold used in this demo for this type of business ({v}).', gstCompulsory:'You selected {r}. That can trigger GST rules that are not decided by turnover alone.', gstBelow:'Your turnover is below the common threshold used in this prototype ({v}), so the threshold alone does not point to registration. Other rules can still apply.', gstExtra:'Because you selected {r}. We are not using a simple turnover-only answer here.', udyamEnter:'Enter your business-equipment investment if you want TaxTrail to estimate your MSME size.', udyamFit:'Your turnover ({t}) and investment ({i}) fit the current MSME thresholds used by this prototype.', udyamOutside:'The entered turnover and investment are outside the current MSME thresholds used by this prototype.', professionalDesc:'Some professions and states have additional rules. TaxTrail flags this for review instead of claiming automatic registration.', compositionDesc:'Your answers fit a simple screening scenario for possible composition eligibility. Confirm all conditions before relying on it.',
+      taxNote:'This is a simplified illustration from turnover × {r}%. It is not a finding that you qualify.', taxNote2:'This uses the simplified AY 2026–27 new-regime calculation built into the prototype. Other income and personal facts can change the actual tax.', noTax:'We are not showing a simplified tax number because this scenario needs more facts or falls outside the demo\'s simplified presumptive-tax range.',
+      benefitUdyam:'Potentially relevant if you want formal MSME registration. Registration is through the official Udyam portal.', benefitMudra:'Potential financing route for eligible micro-enterprises; this screen does not determine approval.', benefitCgtmse:'Potential credit-support route for eligible borrowers through participating lenders; separate eligibility checks apply.', benefitPmegp:'Potential scheme to explore for eligible new micro-enterprises; this demo does not claim that you qualify.', benefitLabour:'Because you have paid helpers, check the rules applicable to your state and business premises.',
+      stateIn:'in {s}', yesWord:'YES', taxScheme44AD:'44AD illustration', taxScheme44ADA:'44ADA illustration',
+      sourcesLabel:'Sources:', incomeTaxDept:'Income Tax Department', cbic:'CBIC GST', udyamPortal:'Udyam Registration'
+    },
+    hi: {
+      demoMark:'PS-12 · अनौपचारिक अर्थव्यवस्था टैक्स-सिम्प्लिसिटी एडवाइज़र', language:'भाषा', heroEyebrow:'अपने काम के बारे में बताएं', heroTitle:'अपने व्यवसाय का वर्णन करें।<br>हम नियमों को आसान बनाएंगे।', heroIntro:'अपने काम के बारे में सामान्य भाषा में बताएं। TaxTrail संभावित रजिस्ट्रेशन, जहां सरल तरीका लागू हो वहां अनुमानित टैक्स और देखने लायक योजनाओं की सूची बनाता है। कुछ भी कहीं फाइल या रिपोर्ट नहीं किया जाता।',
+      step1:'चरण 1', step1Title:'सरल भाषा में बताएं, आप क्या काम करते हैं?', placeholder:'जैसे: मैं 2 मददगारों के साथ सिलाई की दुकान चलाता हूं, सालाना टर्नओवर करीब ₹18 लाख है, आधा UPI और आधा नकद', analyze:'मेरे व्यवसाय का विश्लेषण करें',
+      step2:'चरण 2 · हमने क्या समझा, जांचें', step2Title:'गणना से पहले जानकारी की पुष्टि करें', mainActivity:'मुख्य काम', sell:'मैं मुख्य रूप से सामान बेचता हूं', services:'मैं मुख्य रूप से सेवाएं देता हूं', mixedActivity:'मैं दोनों करता हूं', category:'यह किस तरह का काम है?', business:'दुकान / ट्रेडिंग / छोटा व्यवसाय', professional:'पेशेवर काम (जैसे डॉक्टर, वकील, CA, आर्किटेक्ट)', turnover:'साल में व्यवसाय की लगभग कितनी बिक्री होती है? (₹)', turnoverHelp:'यह आपके व्यवसाय का सालाना टर्नओवर है — कुल बिक्री/रसीदें, आपका व्यक्तिगत मुनाफा नहीं।', investment:'व्यवसाय के उपकरणों में लगभग कितना निवेश किया है? (₹)', investmentPlaceholder:'पता न हो तो खाली छोड़ें', investmentHelp:'मशीन, औजार और व्यवसाय के उपकरण सोचें। इसका उपयोग सिर्फ MSME का अनुमान लगाने के लिए होता है।', employees:'क्या आपके साथ पैसे पर काम करने वाले मददगार या कर्मचारी हैं?', employeesPlaceholder:'नहीं हैं तो 0', employeesHelp:'इससे संभावित स्थानीय दुकान/श्रम नियमों को फ्लैग किया जाता है।', payment:'ग्राहक आम तौर पर आपको कैसे भुगतान करते हैं?', paymentUnknown:'पक्का नहीं', mostlyCash:'ज्यादातर नकद', paymentMixed:'नकद + UPI/ऑनलाइन दोनों', mostlyDigital:'लगभग पूरा UPI/ऑनलाइन (95%+)', paymentHelp:'यह सरल अनुमानित टैक्स गणना को प्रभावित कर सकता है।', digitalShare:'लगभग कितना भुगतान डिजिटल होता है?', digitalPlaceholder:'जैसे 60', digitalHelp:'यह सवाल तभी जरूरी है जब आप मिश्रित भुगतान चुनें।', state:'आपका व्यवसाय किस राज्य में है?', stateUnknown:'पता नहीं / बताना नहीं चाहते', interstate:'क्या आप दूसरे राज्यों के ग्राहकों को बेचते हैं?', ecommerce:'क्या आप Amazon, Flipkart, Meesho, Swiggy आदि के जरिए बेचते हैं?', yes:'हां', no:'नहीं', notSure:'पक्का नहीं', interstateHelp:'हां होने पर GST के नियम बदल सकते हैं, इसलिए हम परिणाम में इसे फ्लैग करेंगे।', ecommerceHelp:'हां होने पर GST के कुछ नियमों की अतिरिक्त जांच जरूरी हो सकती है।', showResults:'मेरे परिणाम दिखाएं',
+      step3:'चरण 3 · आसान भाषा में आपका परिणाम', step3Title:'इसका आपके लिए क्या मतलब है', registrations:'रजिस्ट्रेशन और जरूरी जांच', taxPicture:'अनुमानित टैक्स तस्वीर', schemes:'संभावित योजनाएं और लाभ', why:'मुझे यह परिणाम क्यों मिला?', next:'अगले सुझाए गए कदम', assumptions:'इस प्रोटोटाइप की मान्यताएं और स्रोत', disclaimer:'यह केवल प्रोटोटाइप मार्गदर्शन है। टैक्स, GST, MSME और योजना की पात्रता आपके तथ्यों और मौजूदा नियमों पर निर्भर करती है, जिन्हें यह ऑफलाइन डेमो पूरी तरह सत्यापित नहीं कर सकता। यह कुछ भी फाइल नहीं करता। कार्रवाई से पहले संबंधित आधिकारिक पोर्टल या योग्य पेशेवर से पुष्टि करें।', reset:'फिर से शुरू करें',
+      turnoverMissing:'आपके लिखे विवरण से हम सालाना व्यवसाय की बिक्री का अनुमान नहीं लगा पाए। नीचे लगभग रकम भरें।', monthlyConverted:'हमें महीने की रकम मिली और उसे सालाना टर्नओवर में ×12 करके बदला है। कृपया पुष्टि करें।', stateMissing:'आपने अपना राज्य नहीं बताया। कृपया नीचे चुनें।', digitalMention:'आपने डिजिटल भुगतान बताया, लेकिन हमने यह नहीं माना कि 95%+ भुगतान डिजिटल है। नीचे भुगतान का तरीका चुनें।', investmentMissing:'आपने व्यवसाय के उपकरणों में निवेश नहीं बताया। MSME का अनुमान चाहिए तो रकम भरें, वरना खाली छोड़ सकते हैं।', good:'ठीक है — डेमो ने एक संभावित स्थिति पहचान ली है।', uncertain:'कुछ जानकारी निश्चित नहीं है। परिणाम पर भरोसा करने से पहले उसे जांचें।',
+      notProvided:'नहीं बताया गया', annualTurnover:'सालाना टर्नओवर', gstScreen:'GST स्थिति', taxStatus:'टैक्स स्थिति', msmeSize:'MSME आकार', moreInfo:'और जानकारी चाहिए', likelyRegistration:'रजिस्ट्रेशन संभवतः जरूरी', extraReview:'GST की अतिरिक्त जांच जरूरी', belowThreshold:'सामान्य सीमा से नीचे',
+      gstRegistration:'GST रजिस्ट्रेशन', checkRequired:'जांच / जरूरी', recommended:'सुझाया गया', optional:'वैकल्पिक / जांचें', whyGst:'GST की अतिरिक्त जांच क्यों?', udyam:'उद्यम / MSME', labour:'स्थानीय दुकान / श्रम जांच', professionalChecks:'पेशेवर काम से जुड़ी जांच', composition:'कम्पोजिशन स्कीम',
+      taxIncome:'अनुमानित व्यवसाय/पेशेवर आय', taxCess:'अनुमानित आयकर + 4% सेस', paymentUsed:'गणना में इस्तेमाल भुगतान तरीका', almostDigital:'लगभग पूरा डिजिटल (95%+)', cashDigital:'नकद + डिजिटल', paymentNotConfirmed:'भुगतान का तरीका पक्का नहीं था, इसलिए डिजिटल भुगतान की कोई विशेष मान्यता नहीं लगाई गई।', digital95:'इस अनुमान में 95%+ डिजिटल भुगतान वाली मान्यता इस्तेमाल की गई।', digitalNot95:'95%+ डिजिटल भुगतान वाली मान्यता इस्तेमाल नहीं की गई।',
+      udyamBenefit:'उद्यम रजिस्ट्रेशन', mudra:'मुद्रा', cgtmse:'CGTMSE', pmegp:'PMEGP', localRules:'स्थानीय श्रम / दुकान नियम',
+      whyTurnover:'आपने सालाना व्यवसाय का टर्नओवर {v} बताया। TaxTrail टर्नओवर को मुनाफे से अलग रखता है।', whyGstScreen:'GST स्थिति: {v}। {d}', whyInterstate:'आपने दूसरे राज्यों में बिक्री/सेवा के लिए हां चुना, इसलिए GST जांच में सिर्फ टर्नओवर पर निर्भर नहीं किया गया।', whyEcom:'आपने ऑनलाइन/e-commerce बिक्री के लिए हां चुना, इसलिए GST की अतिरिक्त जांच जोड़ी गई।', whyPayment:'भुगतान तरीका: {v}। इसका उपयोग सिर्फ सरल अनुमानित टैक्स गणना में होता है।', whyMsme:'MSME आकार: {v}। इसमें टर्नओवर और व्यवसाय के उपकरणों में निवेश दोनों देखे जाते हैं।',
+      nextGst:'परिणाम पर भरोसा करने से पहले आधिकारिक GST पोर्टल पर रजिस्ट्रेशन की लागू स्थिति जांचें।', nextKeep:'टर्नओवर के रिकॉर्ड रखें और जांचें कि आपके व्यवसाय पर GST का कोई विशेष रजिस्ट्रेशन नियम लागू तो नहीं होता।', nextInvestment:'MSME का अनुमान चाहिए तो व्यवसाय के उपकरणों में लगभग निवेश की रकम भरें।', nextUdyam:'जरूरत हो तो उद्यम पात्रता की पुष्टि करके आधिकारिक सरकारी पोर्टल से रजिस्ट्रेशन करें।', nextTaxConfirm:'फाइलिंग में इस अनुमान का उपयोग करने से पहले पुष्टि करें कि सरल presumptive-tax योजना आपके व्यवसाय पर लागू होती है।', nextFullTax:'यदि यह सरल स्थिति आपके काम पर लागू नहीं होती, तो पूरी टैक्स गणना या पेशेवर मदद लें।', nextSchemes:'लोन/सब्सिडी वाली योजनाओं को जांचने योग्य विकल्प मानें, मंजूरी या पक्का लाभ नहीं।',
+      footer:'TaxTrail डेमो को आपके ब्राउज़र में ही चलाता है। कोई फॉर्म किसी प्राधिकरण को जमा नहीं होता।',
+      sourceGst:'यह ऑफलाइन प्रोटोटाइप एक सामान्य स्क्रीनिंग सीमा का उपयोग करता है और inter-State/e-commerce उत्तरों को अलग से फ्लैग करता है क्योंकि GST रजिस्ट्रेशन कुछ अनिवार्य-रजिस्ट्रेशन नियमों पर भी निर्भर कर सकता है। यह पूरा GST कानूनी इंजन नहीं है।', sourceTax:'यह अनुमान प्रोटोटाइप में बने सरल AY 2026–27 new-regime calculation का उपयोग करता है। यह टैक्स-रिटर्न कैलकुलेटर नहीं है और हर प्रकार की आय या special-rate item को शामिल नहीं करता।', sourceMsme:'मौजूदा उद्यम वर्गीकरण में निवेश और टर्नओवर दोनों देखे जाते हैं: Micro ≤₹2.5cr निवेश और ≤₹10cr टर्नओवर; Small ≤₹25cr और ≤₹100cr; Medium ≤₹125cr और ≤₹500cr.', sourceIntro:'स्रोत:', sourceEnd:'वास्तविक उपयोग से पहले इस डेमो की जानकारी को मौजूदा सरकारी सूचनाओं के अनुसार फिर से जांचें।',
+      invalidTurnover:'कृपया गणना से पहले सालाना व्यवसाय का टर्नओवर भरें।', invalidDigital:'कृपया डिजिटल भुगतान का प्रतिशत 0 से 100 के बीच भरें।', yourState:'आपका राज्य', noHelpers:'कोई paid helper दर्ज नहीं किया गया, इसलिए इस डेमो ने श्रम नियमों का फ्लैग नहीं जोड़ा।', paidHelpers:'आपने {n} paid helper दर्ज किए हैं। {state} में लागू दुकान/स्थापना और श्रम नियम जांचें।',
+      gstAbove:'आपका टर्नओवर इस व्यवसाय के लिए डेमो में इस्तेमाल सामान्य सीमा ({v}) से ऊपर है।', gstCompulsory:'आपने {r} चुना है। इससे GST के ऐसे नियम लागू हो सकते हैं जो केवल टर्नओवर से तय नहीं होते।', gstBelow:'आपका टर्नओवर इस प्रोटोटाइप में इस्तेमाल सामान्य सीमा ({v}) से नीचे है, इसलिए सिर्फ सीमा के आधार पर रजिस्ट्रेशन जरूरी नहीं दिखता। अन्य नियम लागू हो सकते हैं।', gstExtra:'आपने {r} चुना है। इसलिए हम सिर्फ टर्नओवर के आधार पर निर्णय नहीं ले रहे हैं।', udyamEnter:'MSME आकार का अनुमान चाहिए तो व्यवसाय के उपकरणों में निवेश की रकम भरें।', udyamFit:'आपका टर्नओवर ({t}) और निवेश ({i}) इस प्रोटोटाइप में इस्तेमाल मौजूदा MSME सीमाओं के भीतर हैं।', udyamOutside:'दिया गया टर्नओवर और निवेश इस प्रोटोटाइप में इस्तेमाल MSME सीमाओं से बाहर हैं।', professionalDesc:'कुछ पेशों और राज्यों में अतिरिक्त नियम होते हैं। TaxTrail इन्हें समीक्षा के लिए फ्लैग करता है, अपने आप रजिस्ट्रेशन का दावा नहीं करता।', compositionDesc:'आपके उत्तर कम्पोजिशन पात्रता की एक सरल स्क्रीनिंग स्थिति से मेल खाते हैं। भरोसा करने से पहले सभी शर्तें जांचें।',
+      taxNote:'यह टर्नओवर × {r}% से निकला सरल अनुमान है। यह पात्रता की पुष्टि नहीं है।', taxNote2:'यह प्रोटोटाइप की सरल AY 2026–27 new-regime calculation का उपयोग करता है। दूसरी आय और व्यक्तिगत तथ्य वास्तविक टैक्स बदल सकते हैं।', noTax:'हम सरल टैक्स संख्या नहीं दिखा रहे हैं क्योंकि इस स्थिति के लिए और जानकारी चाहिए या यह डेमो की सरल presumptive-tax सीमा से बाहर है।',
+      benefitUdyam:'अगर आप औपचारिक MSME रजिस्ट्रेशन चाहते हैं तो यह उपयोगी हो सकता है। रजिस्ट्रेशन आधिकारिक उद्यम पोर्टल से होता है।', benefitMudra:'पात्र micro-enterprises के लिए संभावित वित्तीय विकल्प; यह स्क्रीन मंजूरी तय नहीं करती।', benefitCgtmse:'पात्र उधारकर्ताओं के लिए संभावित credit-support विकल्प; अलग पात्रता जांच जरूरी है।', benefitPmegp:'पात्र नए micro-enterprises के लिए देखने लायक संभावित योजना; यह डेमो आपकी पात्रता का दावा नहीं करता।', benefitLabour:'क्योंकि आपने paid helpers बताए हैं, अपने राज्य और व्यवसाय की जगह पर लागू नियम जांचें।',
+      stateIn:'{s} में', yesWord:'हां', taxScheme44AD:'44AD अनुमान', taxScheme44ADA:'44ADA अनुमान', sourcesLabel:'स्रोत:', incomeTaxDept:'Income Tax Department', cbic:'CBIC GST', udyamPortal:'Udyam Registration'
+    }
+  };
+  function tx(k, vars={}){let v=I18N[lang][k]??I18N.en[k]??k;return Object.entries(vars).reduce((s,[key,val])=>s.replaceAll('{'+key+'}',String(val)),v);}
+  function flagText(k){return tx(k);}
+  function money(n){return '₹'+Math.round(n||0).toLocaleString('en-IN');}
+  function applyStateOptions(){const s=root.querySelector('#f-state');const cur=s.value;s.innerHTML='<option value="">Not sure / prefer not to say</option>'+STATES.map(x=>`<option>${x}</option>`).join('');if(cur)s.value=cur;}
+  function applyExamples(){const wrap=root.querySelector('#example-chips');wrap.innerHTML='';EXAMPLES[lang].forEach(x=>{const b=document.createElement('button');b.className='chip';b.type='button';b.textContent=x;b.onclick=()=>root.querySelector('#biz-desc').value=x;wrap.appendChild(b);});}
+  function parseAmount(text){
+    const cleaned=text.toLowerCase().replace(/,/g,'');
+    const m=cleaned.match(/(?:₹|rs\.?|inr)\s*(\d+(?:\.\d+)?)\s*(crore|crores|करोड़|lakh|lakhs|lac|लाख|k|thousand|हजार|हज़ार)?/i) || cleaned.match(/(\d+(?:\.\d+)?)\s*(crore|crores|करोड़|lakh|lakhs|lac|लाख|k|thousand|हजार|हज़ार)/i);
+    if(!m)return null;
+    let n=Number(m[1]);const u=(m[2]||'').toLowerCase();
+    if(/crore|करोड़/.test(u))n*=1e7;else if(/lakh|lac|लाख/.test(u))n*=1e5;else if(/k|thousand|हजार|हज़ार/.test(u))n*=1e3;return n;
+  }
+  function extractLocally(desc){
+    const t=desc.toLowerCase();
+    const emp=t.match(/(\d+)\s*(helpers?|workers?|employees?|staff|assistants?|karigar|कारीगर|मददगार|लोग)/i);
+    const employees=emp?Number(emp[1]):0;
+    const amount=parseAmount(t);
+    const monthly=/monthly|per month|month|\/mo\b|महीने|महीना|मासिक/.test(t);
+    const turnover=amount?(monthly?amount*12:amount):null;
+    const digitalMention=/upi|online|card|bank transfer|bank\b|digital|net ?banking|ऑनलाइन|बैंक|कार्ड/.test(t);
+    const cashMention=/\bcash\b|नकद|नगद/.test(t);
+    const almostAllDigital=/95\s*%|95\s*percent|almost all|nearly all|लगभग सब|लगभग पूरा/.test(t);
+    let payment='unknown';
+    if(almostAllDigital) payment='mostly_digital';
+    else if(digitalMention&&cashMention) payment='mixed';
+    else if(cashMention) payment='mostly_cash';
+    else if(digitalMention) payment='mixed';
+    const goods=/\bsell\b|selling|shop|store|vendor|cart|trader|goods|kirana|grocery|बेच|दुकान|ठेला|किराना/.test(t);
+    const services=/repair|freelance|consult|design|tailor|tailoring|salon|beautician|driver|service|mechanic|electrician|plumber|carpenter|tutor|tuition|photographer|caterer|laundry|dhobi|mason|painter|सिलाई|मरम्मत|सेवा|फ्रीलांस|मैकेनिक|इलेक्ट्रीशियन|प्लंबर|ट्यूशन/.test(t);
+    const sector=goods&&services?'mixed':services?'services':'goods';
+    const professional=/doctor|lawyer|advocate|chartered accountant|\bca\b|architect|engineer|specified professional|डॉक्टर|वकील|आर्किटेक्ट/.test(t);
+    let state=null;for(const s of STATES){if(t.includes(s.toLowerCase())){state=s;break;}}
+    const flags=[];
+    if(amount===null)flags.push('turnoverMissing');
+    else if(monthly)flags.push('monthlyConverted');
+    if(!state)flags.push('stateMissing');
+    if(payment==='mixed'&&digitalMention&&!cashMention)flags.push('digitalMention');
+    flags.push('investmentMissing');
+    return {sector,isProfessional:professional,turnover,employees,payment,state,interstate:/inter-state|interstate|outside state|दूसरे राज्य/.test(t)?'yes':'unknown',ecommerce:/amazon|flipkart|meesho|e-commerce|ecommerce|online marketplace|swiggy|zomato|मार्केटप्लेस/.test(t)?'yes':'unknown',confidence:flags.length>2?'medium':'good',flags};
+  }
+  function animateStep(section,staggerCards){
+    section.classList.remove('tt-step-enter');
+    void section.offsetWidth;
+    section.classList.add('tt-step-enter');
+    if(staggerCards){
+      const items=section.querySelectorAll('.summary-item,.result-card,.assumptions,.disclaimer');
+      items.forEach((item,i)=>{
+        item.classList.remove('tt-card-enter');
+        item.style.animationDelay=(0.12+i*0.08)+'s';
+        void item.offsetWidth;
+        item.classList.add('tt-card-enter');
+      });
+    }
+    window.setTimeout(()=>{
+      section.classList.remove('tt-step-enter');
+      if(staggerCards){section.querySelectorAll('.tt-card-enter').forEach(item=>{item.classList.remove('tt-card-enter');item.style.animationDelay='';});}
+    },900);
+  }
+  function fillFacts(x){
+    root.querySelector('#f-sector').value=x.sector;
+    root.querySelector('#f-category').value=x.isProfessional?'professional':'business';
+    root.querySelector('#f-turnover').value=x.turnover===null?'':Math.round(x.turnover);
+    root.querySelector('#f-investment').value='';
+    root.querySelector('#f-employees').value=x.employees;
+    root.querySelector('#f-payment').value=x.payment;
+    root.querySelector('#f-digital').value='';
+    root.querySelector('#f-state').value=x.state||'';
+    root.querySelector('#f-interstate').value=x.interstate;
+    root.querySelector('#f-ecommerce').value=x.ecommerce;
+    updatePaymentUI();
+    const note=x.flags.length?x.flags.map(flagText).join(' '):COPY[lang].good;
+    root.querySelector('#confidence-note').dataset.i18nKey=''; root.querySelector('#confidence-note').textContent=note;
+    const factsPanel=root.querySelector('#facts-panel');
+    factsPanel.hidden=false;
+    animateStep(factsPanel,false);
+    root.querySelector('#analyze-btn').classList.remove('tt-action-pop');
+    void root.querySelector('#analyze-btn').offsetWidth;
+    root.querySelector('#analyze-btn').classList.add('tt-action-pop');
+    factsPanel.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function updatePaymentUI(){
+    const payment=root.querySelector('#f-payment').value;
+    root.querySelector('#digital-wrap').hidden=payment!=='mixed';
+  }
+  function slabTax(income){const slabs=[[400000,0],[800000,.05],[1200000,.10],[1600000,.15],[2000000,.20],[2400000,.25],[Infinity,.30]];let tax=0,prev=0;for(const [limit,rate] of slabs){if(income<=prev)break;tax+=(Math.min(income,limit)-prev)*rate;prev=limit;}return tax;}
+  function incomeTax(income){if(income<=1200000)return 0;return Math.round(slabTax(income)*1.04);}
+  function compute(f){
+    const turnover=Math.max(0,f.turnover||0);
+    const investment=f.investment===null||f.investment===''?null:Math.max(0,Number(f.investment));
+    const digital=f.payment==='mostly_digital'?0.95:f.payment==='mixed'?(Math.min(100,Math.max(0,Number(f.digital)||50))/100):f.payment==='mostly_cash'?0.10:null;
+    const special=SPECIAL_GST_STATES.has(f.state);
+    const threshold=f.sector==='goods'&&!special?4000000:f.sector==='goods'&&special?2000000:2000000;
+    const thresholdHit=turnover>threshold;
+    const compulsoryReasons=[];
+    if(f.interstate==='yes')compulsoryReasons.push('inter-State taxable supplies');
+    if(f.ecommerce==='yes')compulsoryReasons.push('online/e-commerce activity');
+    const compulsoryFlag=compulsoryReasons.length>0;
+    const gstStatus=thresholdHit?'Likely registration required':compulsoryFlag?'Extra GST review needed':'Likely below the common threshold';
+    const prof=f.category==='professional';
+    const presumptiveCap=prof?(digital!==null&&digital>=.95?7500000:5000000):(digital!==null&&digital>=.95?30000000:20000000);
+    const schemeEligible=turnover>0&&turnover<=presumptiveCap;
+    const profitRate=prof?.5:(digital!==null&&digital>=.95?.06:.08);
+    const deemedProfit=schemeEligible?turnover*profitRate:null;
+    const tax=deemedProfit===null?null:incomeTax(deemedProfit);
+    let msme='Needs investment figure';
+    if(investment!==null){
+      if(investment<=25000000&&turnover<=100000000)msme='Micro';
+      else if(investment<=250000000&&turnover<=1000000000)msme='Small';
+      else if(investment<=1250000000&&turnover<=5000000000)msme='Medium';
+      else msme='Outside these MSME thresholds';
+    }
+    const udyamPossible=investment!==null&&turnover>0&&((investment<=25000000&&turnover<=100000000)||(investment<=250000000&&turnover<=1000000000)||(investment<=1250000000&&turnover<=5000000000));
+    const compositionPotential=f.sector==='goods'&&turnover<=5000000&&f.interstate!=='yes'&&f.ecommerce!=='yes'?'Potentially relevant — verify conditions':'Not a likely composition case from these answers';
+    return {turnover,investment,digital,payment:f.payment,special,threshold,thresholdHit,compulsoryFlag,compulsoryReasons,gstStatus,prof,presumptiveCap,schemeEligible,profitRate,deemedProfit,tax,msme,udyamPossible,compositionPotential};
+  }
+  function li(title,badge,desc){const cls=badge==='required'?'badge--required':badge==='recommended'?'badge--recommended':'badge--optional';const label=badge==='required'?tx('checkRequired'):badge==='recommended'?tx('recommended'):tx('optional');return `<li><div class="reg-head"><strong>${title}</strong><span class="badge ${cls}">${label}</span></div><p>${desc}</p></li>`;}
+  let lastFacts=null,lastCalc=null;
+  function render(f,a){
+    lastFacts=f; lastCalc=a;
+    const paymentLabel={unknown:tx('paymentUnknown'),mostly_cash:tx('mostlyCash'),mixed:tx('cashDigital'),mostly_digital:tx('almostDigital')}[a.payment];
+    const summary=[[tx('annualTurnover'),money(a.turnover)],[tx('gstScreen'),a.gstStatus==='Likely registration required'?tx('likelyRegistration'):a.gstStatus==='Extra GST review needed'?tx('extraReview'):tx('belowThreshold')],[tx('taxStatus'),a.schemeEligible?(a.prof?tx('taxScheme44ADA'):tx('taxScheme44AD')):tx('moreInfo')],[tx('msmeSize'),a.msme==='Needs investment figure'?tx('notProvided'):a.msme]];
+    root.querySelector('#summary-strip').innerHTML=summary.map(x=>`<div class="summary-item"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
+    const regs=[];
+    const reasons=a.compulsoryReasons.map(r=>r==='inter-State taxable supplies'?(lang==='hi'?'inter-State बिक्री/सेवाएं':'inter-State taxable supplies'):lang==='hi'?'ऑनलाइन/e-commerce गतिविधि':'online/e-commerce activity');
+    const reasonText=reasons.join(lang==='hi'?' और ':' and ');
+    const gstDesc=a.thresholdHit?tx('gstAbove',{v:money(a.threshold)}):a.compulsoryFlag?tx('gstCompulsory',{r:reasonText}):tx('gstBelow',{v:money(a.threshold)});
+    regs.push(li(tx('gstRegistration'),a.thresholdHit||a.compulsoryFlag?'required':'recommended',gstDesc));
+    if(a.compulsoryFlag) regs.push(li(tx('whyGst'),'required',tx('gstExtra',{r:reasonText})));
+    regs.push(li(tx('udyam'),a.udyamPossible?'recommended':'optional',a.investment===null?tx('udyamEnter'):a.udyamPossible?tx('udyamFit',{t:money(a.turnover),i:money(a.investment)}):tx('udyamOutside')));
+    regs.push(li(tx('labour'),f.employees>0?'recommended':'optional',f.employees>0?tx('paidHelpers',{n:f.employees,plural:f.employees===1?'':'s',state:f.state||tx('yourState')}):tx('noHelpers')));
+    if(f.category==='professional')regs.push(li(tx('professionalChecks'),'recommended',tx('professionalDesc')));
+    if(a.compositionPotential.startsWith('Potentially'))regs.push(li(tx('composition'),'recommended',tx('compositionDesc')));
+    root.querySelector('#reg-list').innerHTML=regs.join('');
+    let owe='';
+    if(a.schemeEligible){
+      owe+=`<div class="owe-line"><span>${tx('taxIncome')}</span><strong>${money(a.deemedProfit)}</strong></div><p class="owe-note">${tx('taxNote',{r:Math.round(a.profitRate*100)})}</p><div class="owe-line"><span>${tx('taxCess')}</span><strong>${money(a.tax)}</strong></div><p class="owe-note">${tx('taxNote2')}</p>`;
+    } else owe+=`<p class='owe-note'>${tx('noTax')}</p>`;
+    owe+=`<div class="owe-line"><span>${tx('paymentUsed')}</span><strong>${paymentLabel}</strong></div><p class="owe-note">${a.digital!==null?(a.digital>=.95?tx('digital95'):tx('digitalNot95')):tx('paymentNotConfirmed')}</p>`;
+    root.querySelector('#owe-body').innerHTML=owe;
+    const benefits=[];
+    if(a.udyamPossible)benefits.push([tx('udyamBenefit'),tx('benefitUdyam')]);
+    benefits.push([tx('mudra'),tx('benefitMudra')]); benefits.push([tx('cgtmse'),tx('benefitCgtmse')]); benefits.push([tx('pmegp'),tx('benefitPmegp')]);
+    if(f.employees>0)benefits.push([tx('localRules'),tx('benefitLabour')]);
+    root.querySelector('#benefit-list').innerHTML=benefits.map(b=>`<li><strong>${b[0]}</strong><p>${b[1]}</p></li>`).join('');
+    const why=[];
+    why.push(tx('whyTurnover',{v:money(a.turnover)})); why.push(tx('whyGstScreen',{v:a.gstStatus==='Likely registration required'?tx('likelyRegistration'):a.gstStatus==='Extra GST review needed'?tx('extraReview'):tx('belowThreshold'),d:gstDesc}));
+    if(f.interstate==='yes')why.push(tx('whyInterstate')); if(f.ecommerce==='yes')why.push(tx('whyEcom')); why.push(tx('whyPayment',{v:paymentLabel})); why.push(tx('whyMsme',{v:a.msme==='Needs investment figure'?tx('notProvided'):a.msme}));
+    root.querySelector('#why-body').innerHTML=`<ul class="why-list">${why.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+    const steps=[];
+    if(a.thresholdHit||a.compulsoryFlag)steps.push(tx('nextGst'));else steps.push(tx('nextKeep'));
+    if(a.investment===null)steps.push(tx('nextInvestment'));else if(a.udyamPossible)steps.push(tx('nextUdyam'));
+    if(a.schemeEligible)steps.push(tx('nextTaxConfirm'));else steps.push(tx('nextFullTax')); steps.push(tx('nextSchemes'));
+    root.querySelector('#next-steps').innerHTML=steps.map(x=>`<li>${x}</li>`).join('');
+    root.querySelector('#assumptions-body').innerHTML=`<p><strong>GST:</strong> ${tx('sourceGst')}</p><p><strong>${lang==='hi'?'आयकर':'Income tax'}:</strong> ${tx('sourceTax')}</p><p><strong>MSME/Udyam:</strong> ${tx('sourceMsme')}</p><p><strong>${tx('sourcesLabel')}</strong> <a href="https://www.incometax.gov.in/" target="_blank" rel="noreferrer">${tx('incomeTaxDept')}</a> · <a href="https://cbic-gst.gov.in/" target="_blank" rel="noreferrer">${tx('cbic')}</a> · <a href="https://udyamregistration.gov.in/" target="_blank" rel="noreferrer">${tx('udyamPortal')}</a>. ${tx('sourceEnd')}</p>`;
+    root.querySelector('#results-wrap').hidden=false;
+  }
+  function setStatic(){
+    root.setAttribute('lang',lang); applyExamples(); applyStateOptions();
+    const map={
+      '.demo-mark':'demoMark','.language-box > span':'language','.hero .eyebrow':'heroEyebrow','.hero h1':'heroTitle','.intro':'heroIntro',
+      '.entry-panel .eyebrow':'step1','.entry-panel h2':'step1Title','#analyze-btn':'analyze','.facts-panel .eyebrow':'step2','.facts-panel h2':'step2Title',
+      '#calculate-btn':'showResults','.results-wrap .eyebrow':'step3','.results-wrap h2':'step3Title','.result-card h3:nth-of-type(1)':'registrations'
+    };
+    Object.entries(map).forEach(([sel,key])=>{const el=root.querySelector(sel);if(el)el.innerHTML=tx(key);});
+    root.querySelector('#biz-desc').placeholder=tx('placeholder');
+    const labels=root.querySelectorAll('.facts-grid > label');
+    const keys=['mainActivity','category','turnover','investment','employees','payment','digitalShare','state','interstate','ecommerce'];
+    labels.forEach((label,i)=>{const textNode=[...label.childNodes].find(n=>n.nodeType===3);if(textNode)textNode.nodeValue=tx(keys[i])+' ';});
+    const opts={
+      '#f-sector':[['goods','sell'],['services','services'],['mixedActivity','mixedActivity']],
+      '#f-category':[['business','business'],['professional','professional']],
+      '#f-payment':[['unknown','paymentUnknown'],['mostly_cash','mostlyCash'],['mixed','paymentMixed'],['mostly_digital','mostlyDigital']],
+      '#f-interstate':[['unknown','notSure'],['yes','yes'],['no','no']],
+      '#f-ecommerce':[['unknown','notSure'],['yes','yes'],['no','no']]
+    };
+    Object.entries(opts).forEach(([sel,arr])=>{const el=root.querySelector(sel);const val=el.value;el.innerHTML=arr.map(([v,k])=>`<option value="${v}">${tx(k)}</option>`).join('');el.value=val||arr[0][0];});
+    root.querySelector('#f-state').firstElementChild.textContent=tx('stateUnknown');
+    root.querySelector('#f-investment').placeholder=tx('investmentPlaceholder'); root.querySelector('#f-employees').placeholder=tx('employeesPlaceholder'); root.querySelector('#f-digital').placeholder=tx('digitalPlaceholder');
+    const smalls=root.querySelectorAll('.facts-grid small'); ['turnoverHelp','investmentHelp','employeesHelp','paymentHelp','digitalHelp','interstateHelp','ecommerceHelp'].forEach((k,i)=>{if(smalls[i])smalls[i].textContent=tx(k);});
+    const footer=root.querySelector('footer'); if(footer){const text=[...footer.childNodes].find(n=>n.nodeType===3);if(text)text.nodeValue=' '+tx('footer')+' '; const btn=footer.querySelector('button');if(btn)btn.textContent=tx('reset');}
+    root.querySelector('.disclaimer').textContent=tx('disclaimer');
+    const resultCards=root.querySelectorAll('.results-wrap .result-card h3'); if(resultCards.length>=5){resultCards[0].textContent=tx('registrations');resultCards[1].textContent=tx('taxPicture');resultCards[2].textContent=tx('schemes');resultCards[3].textContent=tx('why');resultCards[4].textContent=tx('next');}
+    const assumptions=root.querySelector('.assumptions summary'); if(assumptions)assumptions.textContent=tx('assumptions');
+    if(lastFacts&&lastCalc&&!root.querySelector('#results-wrap').hidden)render(lastFacts,lastCalc);
+  }
+  function setLanguage(nextLang){
+    lang=nextLang==='hi'?'hi':'en';
+    root.querySelectorAll('.language-switch button[data-lang]').forEach(b=>b.classList.toggle('is-active',b.dataset.lang===lang));
+    setStatic();
+    const status=root.querySelector('#analyze-status');
+    if(status && status.dataset.state==='parsed') status.textContent=tx('parsed');
+    if(status && status.dataset.state==='empty') status.textContent=tx('empty');
+    const note=root.querySelector('#confidence-note');
+    if(note && note.dataset.i18nKey) note.textContent=tx(note.dataset.i18nKey);
+  }
+  root.querySelectorAll('.language-switch button[data-lang]').forEach(btn=>{
+    btn.onclick=()=>setLanguage(btn.dataset.lang);
+  });
+  root.querySelector('#analyze-btn').onclick=()=>{const d=root.querySelector('#biz-desc').value.trim();if(!d){root.querySelector('#analyze-status').dataset.state='empty';root.querySelector('#analyze-status').textContent=tx('empty');return;}root.querySelector('#analyze-status').dataset.state='parsed';root.querySelector('#analyze-status').textContent=tx('parsed');fillFacts(extractLocally(d));};
+  root.querySelector('#f-payment').addEventListener('change',updatePaymentUI);
+  root.querySelector('#calculate-btn').onclick=()=>{
+    const turnoverValue=root.querySelector('#f-turnover').value.trim();
+    if(!turnoverValue||Number(turnoverValue)<0){root.querySelector('#confidence-note').textContent=tx('invalidTurnover');root.querySelector('#f-turnover').focus();return;}
+    const investmentValue=root.querySelector('#f-investment').value.trim();
+    const payment=root.querySelector('#f-payment').value;
+    const digitalValue=payment==='mixed'?Number(root.querySelector('#f-digital').value):payment==='mostly_digital'?95:payment==='mostly_cash'?10:null;
+    if(payment==='mixed'&&(digitalValue<0||digitalValue>100)){root.querySelector('#confidence-note').textContent=tx('invalidDigital');root.querySelector('#f-digital').focus();return;}
+    const f={sector:root.querySelector('#f-sector').value,category:root.querySelector('#f-category').value,turnover:Number(turnoverValue),investment:investmentValue===''?null:Number(investmentValue),employees:Math.max(0,Number(root.querySelector('#f-employees').value)||0),payment,digital:digitalValue,state:root.querySelector('#f-state').value,interstate:root.querySelector('#f-interstate').value,ecommerce:root.querySelector('#f-ecommerce').value};
+    if(f.turnover<0||(f.investment!==null&&f.investment<0)){return;}
+    render(f,compute(f));
+    const results=root.querySelector('#results-wrap');
+    results.hidden=false;
+    animateStep(results,true);
+    results.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  root.querySelector('#reset-demo').onclick=()=>{root.querySelector('#biz-desc').value='';root.querySelector('#analyze-status').textContent='';root.querySelector('#facts-panel').hidden=true;root.querySelector('#results-wrap').hidden=true;root.querySelector('#f-payment').value='unknown';root.querySelector('#f-digital').value='';updatePaymentUI();root.scrollIntoView({behavior:'smooth',block:'start'});};
+  root.addEventListener('click',e=>{
+    const btn=e.target.closest('.language-switch button[data-lang]');
+    if(btn){e.preventDefault();setLanguage(btn.dataset.lang);}
+  });
+  setStatic();
+})();
+</script>
+</body>
+</html>
